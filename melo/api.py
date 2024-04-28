@@ -1,13 +1,13 @@
-# import os
+import os
 import re
 
-# import json
+import json
 import torch
 
-# import librosa
+import librosa
 import soundfile
 
-# import torchaudio
+import torchaudio
 import numpy as np
 import torch.nn as nn
 from tqdm import tqdm
@@ -15,11 +15,11 @@ import torch
 
 from . import utils
 
-# from . import commons
+from . import commons
 from .models import SynthesizerTrn
 from .split_utils import split_sentence
 
-# from .mel_processing import spectrogram_torch, spectrogram_torch_conv
+from .mel_processing import spectrogram_torch, spectrogram_torch_conv
 from .download_utils import load_or_download_config, load_or_download_model
 
 

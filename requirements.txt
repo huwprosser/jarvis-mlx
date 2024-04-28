@@ -16,3 +16,8 @@ scipy
 # MeloTTS
 g2p_en
 cached_path
+
+# Main
+pyaudio
+webrtcvad
+sounddevice
