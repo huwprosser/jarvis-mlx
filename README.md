@@ -17,6 +17,9 @@ Using Whisper for this. SOTA speech recognition opensourced by openai and traine
 
 Helpful link: [Whisper MLX](https://github.com/ml-explore/mlx-examples/tree/main/whisper)
 
+## Large Language Model
+Using Phi 3 out the box you can achieve 60 tokens per second on an M1 Max. You can also finetune your own models and load them in. I'd highly recommend Mistral or Llama 3.
+
 ## Text-to-speech (TTS)
 
 For this, I opted to use [MeloTTS](https://github.com/myshell-ai/MeloTTS?tab=readme-ov-file). It's not as hyped up as some other offerings but it's fast, runs on a mac and finetunable on custom data using the original repo. A stripped down version of the inference code for english can be found in [/melo](melo/).
