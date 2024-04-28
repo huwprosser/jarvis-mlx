@@ -1,0 +1,10 @@
+mlx>=0.11
+mlx-lm
+numba
+numpy
+torch
+tqdm
+more-itertools
+tiktoken==0.3.3
+huggingface_hub
+scipy
