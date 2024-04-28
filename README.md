@@ -1,5 +1,7 @@
 # Jarvis MLX
 
+⚠️ Working in progress!
+
 An all-in-one solution to stark-level productivity running offline on your MacBook using SOTA technology and MLX, Apple's new machine learning framework optimized for Apple Silicon.
 
 Native python is required to run MLX libs:
