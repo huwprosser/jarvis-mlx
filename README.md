@@ -1,6 +1,6 @@
 # Jarvis MLX
 
-⚠️ Working in progress!
+⚠️ Working in progress! [Follow me on X for updates!](https://x.com/huwprossercodes)
 
 An all-in-one solution to stark-level productivity running offline on your MacBook using SOTA technology and MLX, Apple's new machine learning framework optimized for Apple Silicon.
 
