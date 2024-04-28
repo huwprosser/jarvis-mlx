@@ -1,3 +1,7 @@
+# MISC
+pytest
+
+# MLX & Whisper
 mlx>=0.11
 mlx-lm
 numba
@@ -8,3 +12,7 @@ more-itertools
 tiktoken==0.3.3
 huggingface_hub
 scipy
+
+# MeloTTS
+g2p_en
+cached_path
