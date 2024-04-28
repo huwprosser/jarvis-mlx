@@ -11,35 +11,35 @@ import stt.whisper.transcribe as ts
 
 from stt.VoiceActivityDetection import VADDetector
 from llm.phi3 import generate_response
+from pydantic import BaseModel
+
+
+class ChatMLMessage(BaseModel):
+    role: str
+    content: str
 
 
 print(
     colored(
-        """   __    _      __        _____  __                 ____  __
-   \ \  /_\    /__\/\   /\\_   \/ _\       /\/\    / /\ \/ /
-    \ \//_\\  / \//\ \ / / / /\/\ \ _____ /    \  / /  \  / 
- /\_/ /  _  \/ _  \ \ V /\/ /_  _\ \_____/ /\/\ \/ /___/  \ 
- \___/\_/ \_/\/ \_/  \_/\____/  \__/     \/    \/\____/_/\_\
-                                                                                               
-""",
+        "Welcome to JARVIS-MLX",
         "cyan",
     )
 )
 
 print(
     colored(
-        "A follow on X would mean the world: https://x.com/huwprossercodes",
+        "Follow me on X for updates: https://x.com/huwprossercodes",
         "light_grey",
     )
 )
-print()
 
 tts = TTS(language="EN_NEWEST", device="mps")
 
 
 class Client:
-    def __init__(self, startListening=True):
+    def __init__(self, startListening=True, history: list[ChatMLMessage] = []):
         self.listening = False
+        self.history = history
         self.vad = VADDetector(self.onSpeechStart, self.onSpeechEnd, sensitivity=0.5)
         self.vad_data = Queue()
         self.tts = tts
@@ -72,6 +72,24 @@ class Client:
         if data.any():
             self.vad_data.put(data)
 
+    def addToHistory(self, content: str, role: str):
+        if role == "user":
+            print(colored(f"User: {content}", "green"))
+        else:
+            print(colored(f"Assistant: {content}", "yellow"))
+
+        print()
+        if role == "user":
+            content = f"""You are a helpful assistant called Jarvis-MLX. Answer the following question in no more than one short sentence. Address me as Sir at all times. Only respond with the dialogue, nothign else.\n\n{content}"""
+        self.history.append(ChatMLMessage(content=content, role=role))
+
+    def getHistoryAsString(self):
+        final_str = ""
+        for message in self.history:
+            final_str += f"<|{message.role}|>{message.content}<|end|>\n"
+
+        return final_str
+
     def transcription_loop(self):
         while True:
             if not self.vad_data.empty():
@@ -79,24 +97,28 @@ class Client:
                 if self.listening and len(data) > 12000:
                     self.toggleListening()
                     transcribed = self.stt.transcribe(data, language="en")
-                    print(colored(f"Transcribed: {transcribed['text']}", "green"))
-                    response = generate_response(
-                        f'<|user|>\n{transcribed["text"]} <|end|>\n<|assistant|>'
-                    )
-                    response = response.split("<|assistant|>")[0]
+                    self.addToHistory(transcribed["text"], "user")
 
-                    print(colored(f"Response: {response}", "yellow"))
+                    history = self.getHistoryAsString()
+                    response = generate_response(history + "\n<|assistant|>")
+                    response = (
+                        response.split("<|assistant|>")[0].split("<|end|>")[0].strip()
+                    )
+                    self.addToHistory(response, "assistant")
+
                     self.speak(response)
 
     def speak(self, text):
         speaker_ids = self.tts.hps.data.spk2id
         self.tts.tts_to_file(text, speaker_ids["EN-Newest"], "temp.wav", speed=1.0)
+        duration = AudioSegment.from_file("temp.wav").duration_seconds
         playsound("temp.wav")
 
-        duration = AudioSegment.from_file("temp.wav").duration_seconds
         time.sleep(duration + 1)
+
+        print(duration)
         self.toggleListening()
 
 
 if __name__ == "__main__":
-    jc = Client(startListening=True)
+    jc = Client(startListening=True, history=[])
