@@ -15,3 +15,7 @@ will create a conda env with numpy for arm64 called "native"
 Using Whisper for this. SOTA speech recognition opensourced by openai and trained on 1.5k hours of audio. It's a tiny model that runs on your macbook, upgradable to larger models in the series for better performance.
 
 Helpful link: [Whisper MLX](https://github.com/ml-explore/mlx-examples/tree/main/whisper)
+
+## Text-to-speech (TTS)
+
+For this, I opted to use [MeloTTS](https://github.com/myshell-ai/MeloTTS?tab=readme-ov-file). It's not as hyped up as some other offerings but it's fast, runs on a mac and finetunable on custom data using the original repo. A stripped down version of the inference code for english can be found in [/melo](melo/).
