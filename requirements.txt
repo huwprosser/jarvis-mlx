@@ -1,5 +1,6 @@
 # MISC
 pytest
+pydantic
 
 # MLX & Whisper
 mlx>=0.11
@@ -19,5 +20,6 @@ cached_path
 
 # Main
 pyaudio
+playsound
 webrtcvad
 sounddevice

@@ -1,8 +1,9 @@
 import time
+import librosa
 import threading
+import sounddevice as sd
 from queue import Queue
 from playsound import playsound
-from pydub import AudioSegment
 from melo.api import TTS
 from stt.VoiceActivityDetection import VADDetector
 from mlx_lm import load, generate
@@ -11,7 +12,7 @@ from pydantic import BaseModel
 # Note keep this at the bottom to avoid errors. Or fix it and submit a PR
 from stt.whisper.transcribe import FastTranscriber
 
-master = "You are a helpful assistant designed to run offline on a macbook with decent performance, you are open source. Answer the following question in no more than one short sentence. Address me as Sir at all times. Only respond with the dialogue, nothing else."
+master = "You are a helpful assistant designed to run offline with decent latency, you are open source. Answer the following input from the user in no more than three sentences. Address them as Sir at all times. Only respond with the dialogue, nothing else. If someone asks you to say hello, say hello."
 
 
 class ChatMLMessage(BaseModel):
@@ -25,7 +26,7 @@ class Client:
         self.listening = False
         self.history = history
         self.vad = VADDetector(lambda: None, self.onSpeechEnd, sensitivity=0.3)
-        self.vad_data = Queue[AudioSegment]()
+        self.vad_data = Queue()
         self.tts = TTS(language="EN_NEWEST", device="mps")
         self.stt = FastTranscriber("mlx-community/whisper-large-v3-mlx-4bit")
         self.model, self.tokenizer = load("mlx-community/Phi-3-mini-4k-instruct-8bit")
@@ -64,9 +65,9 @@ class Client:
 
     def addToHistory(self, content: str, role: str):
         if role == "user":
-            print(f"\033[32mUser: {content}\033[0m")
+            print(f"\033[32m{content}\033[0m")
         else:
-            print(f"\033[33mAssistant: {content}\033[0m")
+            print(f"\033[33m{content}\033[0m")
 
         if role == "user":
             content = f"""{master}\n\n{content}"""
@@ -103,12 +104,16 @@ class Client:
                     self.speak(response)
 
     def speak(self, text):
-        self.tts.tts_to_file(
-            text, self.tts.hps.data.spk2id["EN-Newest"], "temp.wav", speed=1.0
+        data = self.tts.tts_to_file(
+            text,
+            self.tts.hps.data.spk2id["EN-Newest"],
+            speed=0.95,
+            quiet=True,
+            sdp_ratio=0.5,
         )
-        duration = AudioSegment.from_file("temp.wav").duration_seconds
-        playsound("temp.wav", True)
-        time.sleep(duration - 2 if duration > 2 else 0)
+        trimmed_audio, _ = librosa.effects.trim(data, top_db=20)
+        sd.play(trimmed_audio, 44100, blocking=True)
+        time.sleep(1)
 
         self.toggleListening()
 
