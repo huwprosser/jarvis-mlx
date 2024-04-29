@@ -12,7 +12,7 @@ from pydantic import BaseModel
 # Note keep this at the bottom to avoid errors. Or fix it and submit a PR
 from stt.whisper.transcribe import FastTranscriber
 
-master = "You are a helpful assistant designed to run offline with decent latency, you are open source. Answer the following input from the user in no more than three sentences. Address them as Sir at all times. Only respond with the dialogue, nothing else. If someone asks you to say hello, say hello."
+master = "You are a helpful assistant designed to run offline with decent latency, you are open source. Answer the following input from the user in no more than three sentences. Address them as Sir at all times. Only respond with the dialogue, nothing else."
 
 
 class ChatMLMessage(BaseModel):
