@@ -3,15 +3,15 @@ import threading
 from queue import Queue
 from playsound import playsound
 from pydub import AudioSegment
-
-from termcolor import colored
-
 from melo.api import TTS
-import stt.whisper.transcribe as ts
-
 from stt.VoiceActivityDetection import VADDetector
-from llm.phi3 import generate_response
+from mlx_lm import load, generate
 from pydantic import BaseModel
+
+# Note keep this at the bottom to avoid errors. Or fix it and submit a PR
+from stt.whisper.transcribe import FastTranscriber
+
+master = "You are a helpful assistant designed to run offline on a macbook with decent performance, you are open source. Answer the following question in no more than one short sentence. Address me as Sir at all times. Only respond with the dialogue, nothing else."
 
 
 class ChatMLMessage(BaseModel):
@@ -19,37 +19,29 @@ class ChatMLMessage(BaseModel):
     content: str
 
 
-print(
-    colored(
-        "Welcome to JARVIS-MLX",
-        "cyan",
-    )
-)
-
-print(
-    colored(
-        "Follow me on X for updates: https://x.com/huwprossercodes",
-        "light_grey",
-    )
-)
-
-tts = TTS(language="EN_NEWEST", device="mps")
-
-
 class Client:
     def __init__(self, startListening=True, history: list[ChatMLMessage] = []):
+        self.greet()
         self.listening = False
         self.history = history
-        self.vad = VADDetector(self.onSpeechStart, self.onSpeechEnd, sensitivity=0.5)
-        self.vad_data = Queue()
-        self.tts = tts
-        self.stt = ts.FastTranscriber("mlx-community/whisper-large-v3-mlx-4bit")
+        self.vad = VADDetector(lambda: None, self.onSpeechEnd, sensitivity=0.3)
+        self.vad_data = Queue[AudioSegment]()
+        self.tts = TTS(language="EN_NEWEST", device="mps")
+        self.stt = FastTranscriber("mlx-community/whisper-large-v3-mlx-4bit")
+        self.model, self.tokenizer = load("mlx-community/Phi-3-mini-4k-instruct-8bit")
 
         if startListening:
             self.toggleListening()
             self.startListening()
             t = threading.Thread(target=self.transcription_loop)
             t.start()
+
+    def greet(self):
+        print()
+        print(
+            "\033[36mWelcome to JARVIS-MLX\n\nFollow @huwprossercodes on X for updates\033[0m"
+        )
+        print()
 
     def startListening(self):
         t = threading.Thread(target=self.vad.startListening)
@@ -58,15 +50,13 @@ class Client:
     def toggleListening(self):
         if not self.listening:
             print()
-            print(colored(f"Listening...", "green"))
+            playsound("beep.mp3")
+            print("\033[36mListening...\033[0m")
 
         while not self.vad_data.empty():
             self.vad_data.get()
 
         self.listening = not self.listening
-
-    def onSpeechStart(self):
-        pass
 
     def onSpeechEnd(self, data):
         if data.any():
@@ -74,13 +64,12 @@ class Client:
 
     def addToHistory(self, content: str, role: str):
         if role == "user":
-            print(colored(f"User: {content}", "green"))
+            print(f"\033[32mUser: {content}\033[0m")
         else:
-            print(colored(f"Assistant: {content}", "yellow"))
+            print(f"\033[33mAssistant: {content}\033[0m")
 
-        print()
         if role == "user":
-            content = f"""You are a helpful assistant called Jarvis-MLX. Answer the following question in no more than one short sentence. Address me as Sir at all times. Only respond with the dialogue, nothign else.\n\n{content}"""
+            content = f"""{master}\n\n{content}"""
         self.history.append(ChatMLMessage(content=content, role=role))
 
     def getHistoryAsString(self):
@@ -100,7 +89,12 @@ class Client:
                     self.addToHistory(transcribed["text"], "user")
 
                     history = self.getHistoryAsString()
-                    response = generate_response(history + "\n<|assistant|>")
+                    response = generate(
+                        self.model,
+                        self.tokenizer,
+                        prompt=history + "\n<|assistant|>",
+                        verbose=False,
+                    )
                     response = (
                         response.split("<|assistant|>")[0].split("<|end|>")[0].strip()
                     )
@@ -109,14 +103,13 @@ class Client:
                     self.speak(response)
 
     def speak(self, text):
-        speaker_ids = self.tts.hps.data.spk2id
-        self.tts.tts_to_file(text, speaker_ids["EN-Newest"], "temp.wav", speed=1.0)
+        self.tts.tts_to_file(
+            text, self.tts.hps.data.spk2id["EN-Newest"], "temp.wav", speed=1.0
+        )
         duration = AudioSegment.from_file("temp.wav").duration_seconds
-        playsound("temp.wav")
+        playsound("temp.wav", True)
+        time.sleep(duration - 2 if duration > 2 else 0)
 
-        time.sleep(duration + 1)
-
-        print(duration)
         self.toggleListening()
 
 
