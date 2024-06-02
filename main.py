@@ -29,7 +29,9 @@ class Client:
         self.vad_data = Queue()
         self.tts = TTS(language="EN_NEWEST", device="mps")
         self.stt = FastTranscriber("mlx-community/whisper-large-v3-mlx-4bit")
-        self.model, self.tokenizer = load("mlx-community/Phi-3-mini-4k-instruct-8bit")
+        self.model, self.tokenizer = load(
+            "mlx-community/Meta-Llama-3-8B-Instruct-4bit"
+        )  # want lower ltency? use mlx-community/Phi-3-mini-4k-instruct-8bit
 
         if startListening:
             self.toggleListening()
@@ -40,7 +42,7 @@ class Client:
     def greet(self):
         print()
         print(
-            "\033[36mWelcome to JARVIS-MLX\n\nFollow @huwprossercodes on X for updates\033[0m"
+            "\033[36mWelcome to JARVIS-MLX\n\nFollow @huwprosser_ on X for updates\033[0m"
         )
         print()
 
